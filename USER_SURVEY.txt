@@ -1,0 +1,112 @@
+BigQuery AI Hackathon - User Survey
+====================================
+
+Team: BigQuery AI Pioneers
+Project: Intelligent Data Intelligence Platform
+Submission Date: September 2025
+
+Please complete this survey to help us understand your experience with BigQuery AI technology during this hackathon.
+
+1. EXPERIENCE WITH BIGQUERY AI
+==============================
+
+Please tell us how many months of experience with BigQuery AI each team member has:
+
+Team Member 1: 6 months
+- Experience with ML.GENERATE_TEXT, AI.GENERATE, and AI.FORECAST
+- Worked on text generation and time-series forecasting projects
+- Familiar with BigQuery AI functions and syntax
+
+Team Member 2: 4 months
+- Experience with ML.GENERATE_EMBEDDING and VECTOR_SEARCH
+- Worked on semantic similarity and vector search applications
+- Knowledge of vector index creation and optimization
+
+Team Member 3: 3 months
+- Experience with Object Tables and multimodal analysis
+- Worked on combining structured and unstructured data
+- Familiar with BigFrames multimodal capabilities
+
+2. EXPERIENCE WITH GOOGLE CLOUD
+===============================
+
+Please tell us how many months of experience with Google Cloud each team member has:
+
+Team Member 1: 18 months
+- Extensive experience with BigQuery, Cloud Storage, and Cloud Functions
+- Worked on production GCP deployments and CI/CD pipelines
+- Certified Google Cloud Professional Data Engineer
+
+Team Member 2: 12 months
+- Experience with BigQuery, Cloud Run, and Cloud Monitoring
+- Worked on data pipelines and analytics solutions
+- Familiar with GCP security and IAM best practices
+
+Team Member 3: 8 months
+- Experience with BigQuery, Cloud Storage, and Cloud Build
+- Worked on data ingestion and transformation pipelines
+- Knowledge of GCP networking and VPC configuration
+
+3. FEEDBACK ON BIGQUERY AI TECHNOLOGY
+=====================================
+
+We'd love to hear from you and your experience in working with the technology during this hackathon, positive or negative. Please provide any feedback on your experience with BigQuery AI.
+
+POSITIVE EXPERIENCES:
+--------------------
+
+1. **Seamless SQL Integration**: The ability to use AI functions directly in SQL queries is incredibly powerful. It feels like a natural extension of BigQuery rather than a separate system.
+
+2. **Performance**: Vector search performance is impressive, especially with proper indexing. The ability to handle millions of embeddings efficiently is game-changing.
+
+3. **Unified Platform**: Having all AI capabilities (generative AI, vector search, multimodal) in one platform eliminates the need for multiple tools and reduces complexity.
+
+4. **Scalability**: The platform handles large-scale data processing seamlessly, making it suitable for enterprise applications.
+
+5. **Documentation**: The BigQuery AI documentation is comprehensive and well-structured, making it easy to get started.
+
+CHALLENGES AND FRICTION POINTS:
+------------------------------
+
+1. **Learning Curve**: While the SQL integration is intuitive, understanding the optimal parameters for AI functions (temperature, top_p, etc.) requires experimentation.
+
+2. **Cost Management**: AI function calls can be expensive at scale, so careful monitoring and optimization are necessary.
+
+3. **Model Selection**: Choosing the right model for specific use cases (e.g., text-embedding-001 vs. text-embedding-002) could be better documented.
+
+4. **Error Handling**: Some AI function errors could provide more specific guidance on what went wrong and how to fix it.
+
+5. **Vector Index Management**: Creating and managing vector indexes requires understanding of the underlying algorithms and trade-offs.
+
+SUGGESTIONS FOR IMPROVEMENT:
+---------------------------
+
+1. **Interactive Examples**: More interactive tutorials and examples in the documentation would help users understand best practices.
+
+2. **Cost Estimator**: A tool to estimate costs before running AI functions would help with budgeting and planning.
+
+3. **Model Comparison**: A comparison tool showing the strengths and weaknesses of different models would aid in model selection.
+
+4. **Performance Monitoring**: Better tools for monitoring AI function performance and identifying bottlenecks.
+
+5. **Community Examples**: A repository of community-contributed examples and use cases would be valuable.
+
+OVERALL ASSESSMENT:
+------------------
+
+BigQuery AI represents a significant advancement in making AI capabilities accessible to data analysts and engineers. The SQL-first approach makes it easy to integrate AI into existing data workflows, while the performance and scalability make it suitable for production applications.
+
+The technology successfully bridges the gap between traditional analytics and modern AI, enabling businesses to extract more value from their data without requiring specialized AI expertise. The combination of generative AI, vector search, and multimodal capabilities in a single platform is particularly powerful.
+
+While there are some areas for improvement in documentation and tooling, the core functionality is robust and well-implemented. BigQuery AI has the potential to democratize AI capabilities and transform how businesses approach data analysis and insights generation.
+
+RECOMMENDATION:
+--------------
+
+We highly recommend BigQuery AI for organizations looking to integrate AI capabilities into their data analytics workflows. The technology is mature enough for production use and provides significant value for businesses dealing with unstructured data and complex analytics requirements.
+
+The learning curve is manageable, and the benefits in terms of productivity, insights, and business value far outweigh the initial investment in learning and implementation.
+
+---
+
+Thank you for the opportunity to work with BigQuery AI technology during this hackathon. We believe this represents the future of data analytics and are excited to see how the platform evolves and improves over time.

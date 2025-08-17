@@ -1,0 +1,56 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique identifier for the embedding"
+  },
+  {
+    "name": "content_type",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Type of content (text, image, document)"
+  },
+  {
+    "name": "content_hash",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Hash of the original content"
+  },
+  {
+    "name": "embedding_vector",
+    "type": "FLOAT64",
+    "mode": "REPEATED",
+    "description": "Vector representation of the content"
+  },
+  {
+    "name": "model_name",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Name of the embedding model used"
+  },
+  {
+    "name": "dimensions",
+    "type": "INT64",
+    "mode": "REQUIRED",
+    "description": "Number of dimensions in the embedding vector"
+  },
+  {
+    "name": "metadata",
+    "type": "JSON",
+    "mode": "NULLABLE",
+    "description": "Additional metadata about the content"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Timestamp when the embedding was created"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Timestamp when the embedding was last updated"
+  }
+]

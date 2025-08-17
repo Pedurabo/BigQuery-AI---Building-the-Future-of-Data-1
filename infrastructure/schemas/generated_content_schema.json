@@ -1,0 +1,80 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique identifier for the generated content"
+  },
+  {
+    "name": "content_type",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Type of generated content (text, forecast, summary)"
+  },
+  {
+    "name": "input_data",
+    "type": "JSON",
+    "mode": "NULLABLE",
+    "description": "Input data used for generation"
+  },
+  {
+    "name": "generated_content",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "The generated content"
+  },
+  {
+    "name": "model_name",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Name of the AI model used for generation"
+  },
+  {
+    "name": "model_parameters",
+    "type": "JSON",
+    "mode": "NULLABLE",
+    "description": "Parameters used for the model"
+  },
+  {
+    "name": "confidence_score",
+    "type": "FLOAT64",
+    "mode": "NULLABLE",
+    "description": "Confidence score of the generation"
+  },
+  {
+    "name": "processing_time_ms",
+    "type": "INT64",
+    "mode": "NULLABLE",
+    "description": "Time taken to generate content in milliseconds"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Status of the generation (success, failed, pending)"
+  },
+  {
+    "name": "error_message",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Error message if generation failed"
+  },
+  {
+    "name": "metadata",
+    "type": "JSON",
+    "mode": "NULLABLE",
+    "description": "Additional metadata about the generation"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Timestamp when the content was generated"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Timestamp when the content was last updated"
+  }
+]

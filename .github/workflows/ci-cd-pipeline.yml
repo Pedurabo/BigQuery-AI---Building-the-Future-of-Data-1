@@ -1,0 +1,368 @@
+name: BigQuery AI CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  # Security and Quality Checks
+  security-scan:
+    name: Security & Quality Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety pip-audit
+
+      - name: Run Bandit security scan
+        run: |
+          bandit -r src/ -f json -o bandit-report.json || true
+
+      - name: Run Safety check
+        run: |
+          safety check --json --output safety-report.json || true
+
+      - name: Run pip-audit
+        run: |
+          pip-audit --format json --output pip-audit-report.json || true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            pip-audit-report.json
+
+  # Code Quality and Testing
+  test:
+    name: Test BigQuery AI Functions
+    runs-on: ubuntu-latest
+    needs: security-scan
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run linting
+        run: |
+          flake8 src/ tests/
+          black --check src/ tests/
+          isort --check-only src/ tests/
+
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ --cov=src --cov-report=xml --cov-report=html
+
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ --cov=src --cov-report=xml --cov-report=html
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            htmlcov/
+            .pytest_cache/
+
+  # BigQuery AI Validation
+  bigquery-ai-test:
+    name: BigQuery AI Validation
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install google-cloud-bigquery google-cloud-storage
+
+      - name: Set up Google Cloud credentials
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Configure gcloud
+        run: |
+          gcloud config set project ${{ env.PROJECT_ID }}
+          gcloud config set compute/region ${{ env.REGION }}
+
+      - name: Run BigQuery AI tests
+        run: |
+          python -m pytest tests/bigquery_ai/ -v --tb=short
+
+      - name: Validate BigQuery AI functions
+        run: |
+          python scripts/validate_bigquery_ai.py
+
+  # Build and Package
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [test, bigquery-ai-test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Google Container Registry
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            gcr.io/${{ env.PROJECT_ID }}/bigquery-ai:${{ github.sha }}
+            gcr.io/${{ env.PROJECT_ID }}/bigquery-ai:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Python package
+        run: |
+          python setup.py sdist bdist_wheel
+
+      - name: Upload Python package
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package
+          path: dist/
+
+  # Deploy to Development
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: build
+    environment: development
+    if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Google Cloud credentials
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Deploy to development
+        run: |
+          cd infrastructure
+          terraform init
+          terraform workspace select dev
+          terraform apply -auto-approve -var-file=dev.tfvars
+
+      - name: Deploy application
+        run: |
+          gcloud run deploy bigquery-ai-dev \
+            --image gcr.io/${{ env.PROJECT_ID }}/bigquery-ai:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars ENVIRONMENT=development
+
+      - name: Run smoke tests
+        run: |
+          python scripts/smoke_tests.py --environment dev
+
+  # Deploy to Production
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, deploy-dev]
+    environment: production
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Google Cloud credentials
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Deploy to production
+        run: |
+          cd infrastructure
+          terraform init
+          terraform workspace select prod
+          terraform apply -auto-approve -var-file=prod.tfvars
+
+      - name: Deploy application
+        run: |
+          gcloud run deploy bigquery-ai-prod \
+            --image gcr.io/${{ env.PROJECT_ID }}/bigquery-ai:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars ENVIRONMENT=production
+
+      - name: Run production tests
+        run: |
+          python scripts/production_tests.py
+
+      - name: Notify deployment success
+        run: |
+          echo "Production deployment completed successfully!"
+          # Add notification logic here (Slack, email, etc.)
+
+  # Performance Testing
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    needs: deploy-prod
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install locust
+
+      - name: Run performance tests
+        run: |
+          locust -f tests/performance/locustfile.py --headless --users 100 --spawn-rate 10 --run-time 5m
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: |
+            locust_stats.csv
+            locust_stats_history.csv
+
+  # Documentation Generation
+  docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install documentation tools
+        run: |
+          pip install sphinx sphinx-rtd-theme
+
+      - name: Generate API documentation
+        run: |
+          cd docs
+          make html
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: docs/build/html/
+
+  # Final Status Check
+  status-check:
+    name: Final Status Check
+    runs-on: ubuntu-latest
+    needs: [deploy-prod, performance-test, docs]
+    if: always()
+    steps:
+      - name: Check deployment status
+        run: |
+          echo "Checking deployment status..."
+          # Add status checking logic here
+
+      - name: Generate deployment report
+        run: |
+          echo "Generating deployment report..."
+          # Add report generation logic here
+
+      - name: Notify completion
+        run: |
+          if [ "${{ needs.deploy-prod.result }}" == "success" ]; then
+            echo "✅ All stages completed successfully!"
+          else
+            echo "❌ Some stages failed. Check the logs for details."
+            exit 1
+          fi
